@@ -1,0 +1,30 @@
+{
+  "name": "freelance-late-fee-js",
+  "version": "1.0.0",
+  "description": "Compute the late fee owed on an overdue freelance invoice and which reminder stage to send. Zero dependencies, runs via npx straight from GitHub.",
+  "bin": {
+    "freelance-latefee": "./index.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "MIT",
+  "author": "kleogeos",
+  "keywords": [
+    "freelance",
+    "invoice",
+    "late-fee",
+    "cli",
+    "zero-dependencies",
+    "npx"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kleogeos/freelance-late-fee-js"
+  },
+  "homepage": "https://kleogeos.github.io/freelancer-tools/"
+}
