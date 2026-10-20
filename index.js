@@ -9,6 +9,31 @@ const STAGES = [
   [46, null, "final", "Final notice — state next step (pause work / collections)."],
 ];
 
+// Correctly-rounded cents (ties-to-even) from the exact binary value of a
+// double -- a naive Math.round(n*100)/100 can manufacture a spurious tie
+// that Python's round(n, 2) (rounding from the true binary value) would not.
+function round2(n) {
+  if (n === 0) return 0;
+  const neg = n < 0;
+  const ax = Math.abs(n);
+  const s = ax.toFixed(20);
+  const [intPart, fracPart] = s.split(".");
+  const keep = fracPart.slice(0, 2);
+  const rest = fracPart.slice(2);
+  let roundUp;
+  if (rest[0] > "5") roundUp = true;
+  else if (rest[0] < "5") roundUp = false;
+  else {
+    const restAfter = rest.slice(1).replace(/0+$/, "");
+    if (restAfter.length > 0) roundUp = true;
+    else roundUp = parseInt(keep[1] || "0", 10) % 2 === 1;
+  }
+  let keepNum = BigInt(intPart + keep.padEnd(2, "0"));
+  if (roundUp) keepNum += 1n;
+  const result = Number(keepNum) / 100;
+  return neg ? -result : result;
+}
+
 function parseDate(s, label) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     console.error(`Invalid ${label} date '${s}', expected YYYY-MM-DD.`);
@@ -53,8 +78,8 @@ function cmdCompute(args) {
 
   const rawOverdue = Math.round((today.getTime() - due.getTime()) / 86400000);
   const daysOverdue = Math.max(0, rawOverdue - args.graceDays);
-  const fee = daysOverdue <= 0 ? 0.0 : Math.round(args.amount * (args.rate / 100.0) * (daysOverdue / 30.0) * 100) / 100;
-  const total = Math.round((args.amount + fee) * 100) / 100;
+  const fee = daysOverdue <= 0 ? 0.0 : round2(args.amount * (args.rate / 100.0) * (daysOverdue / 30.0));
+  const total = round2(args.amount + fee);
   const [stageKey, stageDesc] = stageFor(daysOverdue);
 
   if (args.json) {
@@ -62,7 +87,7 @@ function cmdCompute(args) {
     // still serialize as "500.0", "2.0") -- replicate that explicitly since
     // JSON.stringify collapses 500.0 to 500.
     const asFloat = (n) => (Number.isInteger(n) ? n.toFixed(1) : String(n));
-    const amount = Math.round(args.amount * 100) / 100;
+    const amount = round2(args.amount);
     const parts = [
       `"invoice_amount": ${asFloat(amount)}`,
       `"due_date": "${isoDate(due)}"`,
